@@ -151,7 +151,7 @@ A comprehensive warehouse management solution that automates package handling th
 
 ---
 
-## 🛠️ Best Practices & Deployment
+## 🛠️ Best Practices & Deployment (For Future Versions)
 
 - **Modular Project Structure**:
   - Separation of concerns (backend, frontend, static, config)
@@ -183,7 +183,7 @@ A comprehensive warehouse management solution that automates package handling th
 
 ---
 
-## 🚀 Deployment Guidelines
+## 🚀 Deployment Guidelines (For Future Versions)
 
 - **Server Stack**:
   - Ubuntu 20.04+, Python 3.8+
