@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            background: #f0f2f5;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .dashboard {
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 750px;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: calc(100% - 750px);
+        }
+
+        .warehouse-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            height: 750px
+        }
+
+        .status-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .command-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            min-height: 60vh;
+        }
+
+        .alerts-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            flex-grow: 1;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .robot {
+            transition: all 1s linear;
+        }
+
+        .path {
+            stroke-width: 10px;
+            stroke: #3498db;
+        }
+
+        .drop-tag {
+            fill: #e74c3c;
+            font-size: 32px;
+        }
+
+        .home-square {
+            fill: none;
+            stroke: #2ecc71;
+            stroke-width: 3;
+        }
+
+        .command-group {
+            margin-bottom: 1.5rem;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 0.8rem;
+            margin-top: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            background: #ffeeba;
+            border-left: 4px solid #ffc107;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+            padding: 20px;
+          }
+        
+          .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;   /* <-- adds space above this button */
+            padding: 0.6em 1.2em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+          }
+          .btn-back:active {
+            transform: translateY(0);
+            box-shadow: none;
+          }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+    <div class="dashboard">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <div class="warehouse-container">
+                <svg id="warehouseMap" width="100%" height="100%"></svg>
+            </div>
+            <div class="status-container">
+                <h2>Robot Fleet Status</h2>
+                <div id="robotStatus">
+                    <p>Current Location: <span id="currentLocation">Home</span></p>
+                    <p>Battery Level: <span id="batteryLevel">85%</span></p>
+                    <p>Status: <span id="robotState">Idle</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+    <div class="right-panel">
+        <div class="command-container">
+            <h2>Robot Commands</h2>
+            
+            <!-- Operation Mode Selector -->
+            <div class="command-group">
+                <label>Operation Mode:</label>
+                <select id="operationMode" onchange="toggleOperationMode()">
+                    <option value="pickup">Standard Pickup</option>
+                    <option value="retrieve">Inventory Retrieve</option>
+                    <option value="custom">Custom Route</option>
+                </select>
+            </div>
+
+            <!-- Standard Pickup Section -->
+            <div id="pickupSection" class="command-group">
+                <p>Robot will collect new packages at Home and deliver to Node C</p>
+                <button id="startPickup" onclick="startStandardPickup()">Start Pickup Operation</button>
+            </div>
+
+            <!-- Inventory Retrieve Section -->
+            <div id="retrieveSection" class="command-group" style="display: none;">
+                <label>Select Storage Node:</label>
+                <select id="retrieveNode">
+                    <option value="">Select storage node</option>
+                </select>
+                <button id="startRetrieve" onclick="startRetrieve()">Begin Retrieve</button>
+            </div>
+
+            <!-- Custom Route Section -->
+            <div id="customSection" class="command-group" style="display: none;">
+                <div class="command-group">
+                    <label>Pickup Node:</label>
+                    <select id="pickupNode">
+                        <option value="">Select pickup node</option>
+                    </select>
+                </div>
+                <div class="command-group">
+                    <label>Destination Node:</label>
+                    <select id="destinationNode">
+                        <option value="">Select destination node</option>
+                    </select>
+                </div>
+                <button id="sendCommand" onclick="handleCustomCommand()">Set Custom Route</button>
+            </div>
+
+            <!-- Confirmation Button -->
+            <button id="confirmAction" onclick="confirmAction()" disabled>Confirm Action</button>
+        </div>
+        <div class="alerts-container">
+            <h2>Alerts</h2>
+            <div id="alerts"></div>
+        </div>
+    </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+
+    <script>
+        const svg = document.getElementById('warehouseMap');
+
+        const nodes = [
+            {id: 'A', x: 10, y: 10, tag: false, type: 'home', status: 'available'},
+            {id: 'B', x: 77.5, y: 10, tag: false, status: 'available'},
+            {id: 'C', x: 130, y: 70, tag: false, status: 'available'},
+            {id: 'D', x: 77.5, y: 60, tag: false, status: 'available'},
+            {id: 'E', x: 55, y: 130, tag: false, status: 'available'},
+            {id: 'F', x: 100, y: 130, tag: true, status: 'available'},
+            {id: 'J', x: 130, y: 130, tag: false, status: 'unavailable'},
+            {id: 'G', x: 10, y: 130, tag: false, status: 'unavailable'},
+            {id: 'H', x: 100, y: 60, tag: false, status: 'unavailable'},
+            {id: 'I', x: 55, y: 60, tag: false, status: 'unavailable'},
+            {id: 'K', x: 130, y: 10, tag: false, status: 'unavailable'},
+        ];
+
+        const edges = [
+            {from: 'A', to: 'B', length: 3},
+            {from: 'B', to: 'K', length: 3},
+            {from: 'K', to: 'C', length: 3},
+            {from: 'C', to: 'J', length: 3},
+            {from: 'J', to: 'F', length: 3},
+            {from: 'F', to: 'E', length: 3},
+            {from: 'E', to: 'G', length: 3},
+            {from: 'G', to: 'A', length: 3},
+            {from: 'F', to: 'H', length: 3},
+            {from: 'H', to: 'D', length: 3},
+            {from: 'D', to: 'I', length: 3},
+            {from: 'I', to: 'E', length: 3},
+            {from: 'B', to: 'D', length: 3}
+        ];
+
+        let currentTask = null;
+        let pickupNode = null;
+        let destinationNode = null;
+        const scale = 5;
+        let batteryLevel = 85;
+
+        function drawPaths() {
+            edges.forEach(edge => {
+                const fromNode = nodes.find(n => n.id === edge.from);
+                const toNode = nodes.find(n => n.id === edge.to);
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                path.setAttribute("class", "path");
+                path.setAttribute("x1", fromNode.x * scale);
+                path.setAttribute("y1", fromNode.y * scale);
+                path.setAttribute("x2", toNode.x * scale);
+                path.setAttribute("y2", toNode.y * scale);
+                path.setAttribute("style", 'stroke-width: 10px');
+                svg.appendChild(path);
+            });
+        }
+
+        function drawNodes() {
+            nodes.forEach(node => {
+                const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                
+                if(node.type === 'home') {
+                    // Draw empty home square
+                    const home = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    home.setAttribute("x", node.x * scale - 30);
+                    home.setAttribute("y", node.y * scale - 30);
+                    home.setAttribute("width", "60");
+                    home.setAttribute("height", "60");
+                    home.setAttribute("class", "home-square");
+                    group.appendChild(home);
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", node.x * scale);
+                    circle.setAttribute("cy", node.y * scale);
+                    circle.setAttribute("r", 5);
+                    circle.setAttribute("fill", "#3498db");
+                    circle.setAttribute("class", "node");
+                    group.appendChild(circle);
+                } else {
+                    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    circle.setAttribute("cx", node.x * scale);
+                    circle.setAttribute("cy", node.y * scale);
+                    circle.setAttribute("r", 10);
+                    circle.setAttribute("fill", "#3498db");
+                    circle.setAttribute("class", "node");
+                    group.appendChild(circle);
+
+                    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", node.x * scale + 7);
+                    text.setAttribute("y", node.y * scale - 7);
+                    text.setAttribute("fill", "#2c3e50");
+                    text.textContent = node.id;
+                    text.setAttribute("font-size", "28");
+                    if (node.status == 'available') {
+                        group.appendChild(text);
+                    }
+                }
+
+                if(node.tag) {
+                    const tag = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    tag.setAttribute("x", node.x * scale - 45);
+                    tag.setAttribute("y", node.y * scale - 12);
+                    tag.setAttribute("class", "drop-tag");
+                    tag.textContent = "📦";
+                    group.appendChild(tag);
+                }
+
+                svg.appendChild(group);
+            });
+        }
+
+
+        let oldDest = 'A';
+
+        function handleCommand() {
+            pickupNode = document.getElementById('pickupNode').value;
+            destinationNode = document.getElementById('destinationNode').value;
+            
+            if(!pickupNode || !destinationNode) {
+                showAlert('Please select both pickup and destination nodes!', 'warning');
+                return;
+            }
+            if (currentTask != null) {
+                oldDest = currentTask.destination;
+            }
+            currentTask = {
+                pickup: pickupNode,
+                destination: destinationNode,
+                stage: 'going-to-pickup'
+            };
+
+            document.getElementById('sendCommand').disabled = true;
+            moveRobotToPickup();
+            showAlert(`Robot en route to pickup at ${pickupNode}`, 'info');
+            updateStatus('Moving to pickup');
+        }
+
+        function moveRobotToPickup() {
+            console.log(oldDest)
+            const path = findPath(oldDest, pickupNode);
+            moveRobotAlongPath(robot, path, () => {
+                document.getElementById('confirmPickup').disabled = false;
+                showAlert(`Robot arrived at pickup ${pickupNode}. Confirm pickup.`, 'success');
+                updateStatus('Waiting for pickup confirmation');
+            });
+        }
+
+        function confirmPickup() {
+            document.getElementById('confirmPickup').disabled = true;
+            const path = findPath(pickupNode, destinationNode);
+            moveRobotAlongPath(robot, path, () => {
+                showAlert(`Package delivered to ${destinationNode}`, 'success');
+                updateStatus('Idle');
+                document.getElementById('sendCommand').disabled = false;
+                batteryLevel -= 5;
+                document.getElementById('batteryLevel').textContent = `${batteryLevel}%`;
+            });
+            showAlert(`Package picked up. Moving to ${destinationNode}`, 'info');
+            updateStatus('Moving to destination');
+        }
+
+        const numNodes = 6;
+        const nodeNames = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+        const graph = [
+            [   0, 67.5,   -1,   -1,  165,   -1], // A
+            [67.5,    0,127.5,   50,   -1,   -1], // B
+            [  -1,127.5,    0,   -1,   -1,   90], // C
+            [  -1,   50,   -1,    0, 92.5, 92.5], // D
+            [ 165,   -1,   -1, 92.5,    0,   45], // E
+            [  -1,   -1,   90, 92.5,   45,    0]  // F
+        ];
+
+
+        function getNodeIndex(nodeLetter) {
+            const nodeNames = ['A', 'B', 'C', 'D', 'E', 'F'];
+            const index = nodeNames.indexOf(nodeLetter.toUpperCase());
+            
+            if (index === -1) {
+                throw new Error('Invalid node letter. Use A-F');
+            }
+            
+            return index;
+        }
+
+        function applyManualOverrides(path) {
+            const replacements = [
+                { from: ['C', 'F'], to: ['C', 'J', 'F'] },
+                { from: ['D', 'F'], to: ['D', 'H', 'F'] },
+                { from: ['D', 'E'], to: ['D', 'I', 'E'] },
+                { from: ['A', 'E'], to: ['A', 'G', 'E'] },
+                { from: ['B', 'C'], to: ['B', 'K', 'C'] },
+                { from: ['F', 'C'], to: ['F', 'J', 'C'] },
+                { from: ['F', 'D'], to: ['F', 'H', 'D'] },
+                { from: ['E', 'D'], to: ['E', 'I', 'D'] },
+                { from: ['E', 'A'], to: ['E', 'G', 'A'] },
+                { from: ['C', 'B'], to: ['C', 'K', 'B'] },
+            ];
+        
+            for (const { from, to } of replacements) {
+                path = replaceSubsequence(path, from, to);
+            }
+        
+            return path;
+        }
+        
+        function replaceSubsequence(path, from, to) {
+            let result = [];
+            let i = 0;
+        
+            while (i < path.length) {
+                const slice = path.slice(i, i + from.length);
+                if (arraysEqual(slice, from)) {
+                    result.push(...to);
+                    i += from.length;
+                } else {
+                    result.push(path[i]);
+                    i++;
+                }
+            }
+        
+            return result;
+        }
+        
+        function arraysEqual(a, b) {
+            return a.length === b.length && a.every((val, idx) => val === b[idx]);
+        }
+
+        function findPath(startId, endId) {
+            startId = getNodeIndex(startId);
+            endId = getNodeIndex(endId);
+            const distances = new Array(numNodes).fill(Infinity);
+            const previous = new Array(numNodes).fill(-1);
+            const visited = new Array(numNodes).fill(false);
+            
+            distances[startId] = 0;
+        
+            for (let i = 0; i < numNodes; i++) {
+                let current = -1;
+                let minDist = Infinity;
+                
+                for (let j = 0; j < numNodes; j++) {
+                    if (!visited[j] && distances[j] < minDist) {
+                        minDist = distances[j];
+                        current = j;
+                    }
+                }
+        
+                if (current === -1 || current === endId) break;
+                visited[current] = true;
+        
+                for (let j = 0; j < numNodes; j++) {
+                    if (graph[current][j] > 0 && !visited[j]) {
+                        const newDist = distances[current] + graph[current][j];
+                        if (newDist < distances[j]) {
+                            distances[j] = newDist;
+                            previous[j] = current;
+                        }
+                    }
+                }
+            }
+        
+            const path = [];
+            let node = endId;
+            while (node !== -1) {
+                path.unshift(node);
+                node = previous[node];
+            }
+        
+            let readablePath = path.map(idx => nodeNames[idx]);
+
+            console.log(readablePath);
+            readablePath = applyManualOverrides(readablePath)
+            console.log(readablePath);
+        
+            return readablePath;
+        }
+
+        const result = findPath('A', 'D');
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            document.getElementById('alerts').prepend(alert);
+        }
+
+        function updateStatus(status) {
+            document.getElementById('robotState').textContent = status;
+            document.getElementById('currentLocation').textContent = 
+                currentTask?.stage === 'going-to-pickup' ? pickupNode : destinationNode;
+        }
+
+        function createRobot() {
+            const homeNode = nodes.find(n => n.type === 'home');
+            const robot = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            robot.setAttribute("class", "robot");
+            robot.setAttribute("font-size", "48");
+            robot.setAttribute("x", 4 * scale);
+            robot.setAttribute("y", 12 * scale);
+            robot.textContent = "🤖";
+            svg.appendChild(robot);
+            return robot;
+        }
+
+        function moveRobotAlongPath(robot, path, onComplete) {
+            let currentStep = 0;
+            
+            function animate() {
+                if(currentStep < path.length - 1) {
+                    const from = nodes.find(n => n.id === path[currentStep]);
+                    const to = nodes.find(n => n.id === path[currentStep + 1]);
+                    
+                    const edge = edges.find(e => 
+                        (e.from === from.id && e.to === to.id) || 
+                        (e.from === to.id && e.to === from.id)
+                    );
+                    
+                    const duration = edge.length * 1000;
+                    const startTime = Date.now();
+                    
+                    const animateStep = () => {
+                        const elapsed = Date.now() - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        
+                        const x = from.x * scale + (to.x - from.x) * scale * progress;
+                        const y = from.y * scale + (to.y - from.y) * scale * progress;
+                        
+                        robot.setAttribute("x", x-30);
+                        robot.setAttribute("y", y+10);
+                        
+                        if(progress < 1) {
+                            requestAnimationFrame(animateStep);
+                        } else {
+                            currentStep++;
+                            animate();
+                        }
+                    };
+                    
+                    animateStep();
+                } else {
+                    onComplete?.();
+                }
+            }
+            
+            animate();
+        }
+
+        let currentMode = 'pickup';
+        let currentOperation = null;
+
+        function toggleOperationMode() {
+            currentMode = document.getElementById('operationMode').value;
+            document.querySelectorAll('#pickupSection, #retrieveSection, #customSection').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.getElementById(`${currentMode}Section`).style.display = 'block';
+            
+            document.getElementById('confirmAction').disabled = true;
+            currentOperation = null;
+        }
+
+        function startStandardPickup() {
+            currentOperation = {
+                type: 'pickup',
+                stage: 'going-to-pickup',
+                pickup: 'A',
+                destination: 'C'
+            };
+            
+            document.getElementById('confirmAction').disabled = false;
+            moveRobotToNode(currentOperation.pickup, () => {
+                showAlert('Robot at Home base. Load package and confirm', 'success');
+                updateStatus('Waiting for pickup confirmation');
+            });
+        }
+
+        function startRetrieve() {
+            const retrieveNode = document.getElementById('retrieveNode').value;
+            if(!retrieveNode) {
+                showAlert('Please select a storage node!', 'warning');
+                return;
+            }
+            
+            currentOperation = {
+                type: 'retrieve',
+                stage: 'going-to-pickup',
+                pickup: retrieveNode,
+                destination: 'A'
+            };
+            
+            document.getElementById('confirmAction').disabled = false;
+            moveRobotToNode(currentOperation.pickup, () => {
+                showAlert(`Robot at ${retrieveNode}. Retrieve item and confirm`, 'success');
+                updateStatus('Waiting for retrieval confirmation');
+            });
+        }
+
+        function handleCustomCommand() {
+            const pickupNode = document.getElementById('pickupNode').value;
+            const destinationNode = document.getElementById('destinationNode').value;
+            
+            if(!pickupNode || !destinationNode) {
+                showAlert('Please select both pickup and destination nodes!', 'warning');
+                return;
+            }
+            
+            currentOperation = {
+                type: 'custom',
+                stage: 'going-to-pickup',
+                pickup: pickupNode,
+                destination: destinationNode
+            };
+            
+            document.getElementById('confirmAction').disabled = false;
+            moveRobotToNode(currentOperation.pickup, () => {
+                showAlert(`Robot at ${pickupNode}. Confirm pickup`, 'success');
+                updateStatus('Waiting for pickup confirmation');
+            });
+        }
+
+        function confirmAction() {
+            if(!currentOperation) return;
+
+            switch(currentOperation.type) {
+                case 'pickup':
+                    moveRobotToNode(currentOperation.destination, () => {
+                        showAlert('Package delivered to Processing Center (Node C)', 'success');
+                        completeOperation();
+                    });
+                    break;
+                    
+                case 'retrieve':
+                case 'custom':
+                    moveRobotToNode(currentOperation.destination, () => {
+                        showAlert(`Package delivered to ${currentOperation.destination}`, 'success');
+                        completeOperation();
+                    });
+                    break;
+            }
+            
+            document.getElementById('confirmAction').disabled = true;
+        }
+
+        function moveRobotToNode(nodeId, onArrival) {
+            const path = findPath(oldDest, nodeId);
+            moveRobotAlongPath(robot, path, () => {
+                oldDest = nodeId;
+                onArrival?.();
+            });
+        }
+
+        function completeOperation() {
+            batteryLevel -= (currentOperation.type === 'custom') ? 7 : 5;
+            document.getElementById('batteryLevel').textContent = `${batteryLevel}%`;
+            updateStatus('Idle');
+            currentOperation = null;
+        }
+
+        function initializeUI() {
+            const retrieveSelect = document.getElementById('retrieveNode');
+            const pickupSelect = document.getElementById('pickupNode');
+            const destSelect = document.getElementById('destinationNode');
+            
+            nodes.forEach(node => {
+                if(node.status === 'available' && node.id !== 'A') {
+                    const option = document.createElement('option');
+                    option.value = node.id;
+                    option.textContent = node.id;
+                    
+                    retrieveSelect.appendChild(option.cloneNode(true));
+                    pickupSelect.appendChild(option.cloneNode(true));
+                    destSelect.appendChild(option);
+                }
+            });
+        }
+
+        initializeUI();
+        drawPaths();
+        drawNodes();
+        const robot = createRobot();
+        moveRobotAlongPath(robot, ['A'], () => {});
+    </script>
+</body>
+</html>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parcel Management</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .tab-container {
+            margin-bottom: 30px;
+        }
+        
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab-btn {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #7f8c8d;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #3498db;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .dimensions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .dimensions input {
+            flex: 1;
+        }
+        
+        .suggested-location {
+            background-color: #e8f4fc;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .suggested-location i {
+            color: #3498db;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        #lookupResult {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            display: none;
+        }
+        
+        .package-preview {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+            padding: 30px;
+          }
+        
+          .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;   /* <-- adds space above this button */
+            padding: 0.6em 1.2em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+          }
+          .btn-back:active {
+            transform: translateY(0);
+            box-shadow: none;
+          }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="controls">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+    <div class="container">
+        <h1>Parcel Management</h1>
+        
+        <div class="tab-container">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="add">Add New Package</button>
+                <button class="tab-btn" data-tab="update">Update Package</button>
+            </div>
+            
+            <!-- Add Package Tab -->
+            <div id="addTab" class="tab-content active">
+                <div class="section-title">
+                    <i class="fas fa-plus-circle"></i>
+                    <h2>Add New Package</h2>
+                </div>
+                
+                <form id="addPackageForm">
+                    <div class="form-group">
+                        <label for="addPackageId">Package ID</label>
+                        <input type="text" id="addPackageId" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addPackageWeight">Weight (kg)</label>
+                        <input type="number" id="addPackageWeight" step="0.01" min="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Dimensions (cm)</label>
+                        <div class="dimensions">
+                            <input type="number" id="addPackageLength" placeholder="Length" min="1" required>
+                            <input type="number" id="addPackageWidth" placeholder="Width" min="1" required>
+                            <input type="number" id="addPackageHeight" placeholder="Height" min="1" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addPackageDestinationTag">Destination Tag</label>
+                        <select id="addPackageDestinationTag" required>
+                            <option value="1">Tag A</option>
+                            <option value="2">Tag B</option>
+                            <option value="3">Tag C</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addPackageDestinationFloor">Destination Floor</label>
+                        <select id="addPackageDestinationFloor" required>
+                            <option value="1">Floor 1</option>
+                            <option value="2">Floor 2</option>
+                            <option value="3">Floor 3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addPackagePriority">Priority</label>
+                        <select id="addPackagePriority" required>
+                            <option value="1">Low</option>
+                            <option value="2">Medium</option>
+                            <option value="3">High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addPackageNotes">Notes</label>
+                        <textarea id="addPackageNotes" rows="3"></textarea>
+                    </div>
+                    
+                    <div id="addSuggestionResult" class="suggested-location hidden">
+                        <i class="fas fa-lightbulb"></i>
+                        <div>
+                            <strong>Suggested Location:</strong>
+                            <div id="addSuggestedLocation"></div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-save"></i> Save Package
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Update Package Tab -->
+            <div id="updateTab" class="tab-content">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    <h2>Update Package</h2>
+                </div>
+                
+                <form id="lookupForm">
+                    <div class="form-group">
+                        <label for="lookupPackageId">Enter Package ID to Update</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="lookupPackageId" required style="flex: 1;">
+                            <button type="submit" class="btn">
+                                <i class="fas fa-search"></i> Lookup
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <div id="lookupResult">
+                    <div class="package-preview">
+                        <h3>Current Package Details</h3>
+                        <div><strong>ID:</strong> <span id="currentPackageId"></span></div>
+                        <div><strong>Weight:</strong> <span id="currentPackageWeight"></span> kg</div>
+                        <div><strong>Dimensions:</strong> <span id="currentPackageDimensions"></span> cm</div>
+                        <div><strong>Destination:</strong> <span id="currentPackageDestination"></span></div>
+                        <div><strong>Priority:</strong> <span id="currentPackagePriority"></span></div>
+                        <div><strong>Location:</strong> <span id="currentPackageLocation"></span></div>
+                    </div>
+                    
+                    <form id="updatePackageForm" style="margin-top: 20px;">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="updatePackageWeight">Weight (kg)</label>
+                            <input type="number" id="updatePackageWeight" step="0.01" min="0.01">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Dimensions (cm)</label>
+                            <div class="dimensions">
+                                <input type="number" id="updatePackageLength" placeholder="Length" min="1">
+                                <input type="number" id="updatePackageWidth" placeholder="Width" min="1">
+                                <input type="number" id="updatePackageHeight" placeholder="Height" min="1">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="updatePackageDestinationTag">Destination Tag</label>
+                            <select id="updatePackageDestinationTag">
+                                <option value="1">Tag A</option>
+                                <option value="2">Tag B</option>
+                                <option value="3">Tag C</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="updatePackageDestinationFloor">Destination Floor</label>
+                            <select id="updatePackageDestinationFloor">
+                                <option value="1">Floor 1</option>
+                                <option value="2">Floor 2</option>
+                                <option value="3">Floor 3</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="updatePackagePriority">Priority</label>
+                            <select id="updatePackagePriority">
+                                <option value="">Select priority</option>
+                                <option value="1">Low</option>
+                                <option value="2">Medium</option>
+                                <option value="3">High</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="updatePackageNotes">Notes</label>
+                            <textarea id="updatePackageNotes" rows="3"></textarea>
+                        </div>
+                        
+                        <div id="updateSuggestionResult" class="suggested-location hidden">
+                            <i class="fas fa-lightbulb"></i>
+                            <div>
+                                <strong>New Suggested Location:</strong>
+                                <div id="updateSuggestedLocation"></div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn">
+                            <i class="fas fa-save"></i> Update Package
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab') + 'Tab';
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+            
+            document.getElementById('addPackageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addNewPackage();
+            });
+            
+            document.getElementById('lookupForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                lookupPackage();
+            });
+            
+            document.getElementById('updatePackageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updatePackage();
+            });
+            
+            const packageDatabase = [
+                {
+                    id: "PKG-1001",
+                    weight: 2.5,
+                    dimensions: "30×20×15",
+                    destination: "Node E",
+                    priority: "high",
+                    location: "Shelf A5, Zone 3",
+                    notes: "Fragile contents"
+                },
+                {
+                    id: "PKG-1002",
+                    weight: 1.2,
+                    dimensions: "25×15×10",
+                    destination: "Node C",
+                    priority: "medium",
+                    location: "Shelf B2, Zone 1",
+                    notes: ""
+                }
+            ];
+            
+            function addNewPackage() {
+                
+                const formData = {
+                    'pkg_id': $('#addPackageId').val(),
+                    'weight': $('#addPackageWeight').val(),
+                    'length': $('#addPackageLength').val(),
+                    'width': $('#addPackageWidth').val(),
+                    'height': $('#addPackageHeight').val(),
+                    'destination_tag': $('#addPackageDestinationTag').val(),
+                    'destination_floor': $('#addPackageDestinationFloor').val(),
+                    'priority': $('#addPackagePriority').val(),
+                    'notes': $('#addPackageNotes').val(),
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                };
+            
+                $.ajax({
+                    type: 'POST',
+                    url: '/robot/add_package/',
+                    data: formData,
+                    dataType: 'json',
+                    success: function(response) {
+                        alert(`Package added successfully!`);
+                        document.getElementById('addPackageForm').reset();
+                    },
+                    error: function(xhr, s) {
+                        let error = JSON.parse(xhr.responseText);
+                        console.log(error.errors);
+                        showAlert(error.errors, 'danger');
+                    }
+                });
+
+
+                
+            }
+            
+            function lookupPackage() {
+                const packageId = document.getElementById('lookupPackageId').value;
+                $.ajax({
+                    url: '/robot/get_package/',
+                    type: 'GET',
+                    data: {
+                        'pkg_id': packageId
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log(response)
+                        pkg = response.package
+                        document.getElementById('currentPackageId').textContent = pkg.pkg_id;
+                        document.getElementById('currentPackageWeight').textContent = pkg.weight;
+                        document.getElementById('currentPackageDimensions').textContent = `${pkg.length}×${pkg.width}×${pkg.height}`;
+                        document.getElementById('currentPackageDestination').textContent = `${pkg.destination_tag_display} - ${pkg.destination_floor_display}`;
+                        document.getElementById('currentPackagePriority').textContent = pkg.priority;
+                        document.getElementById('currentPackageLocation').textContent = pkg.location;
+                        
+                        document.getElementById('updatePackageWeight').value = pkg.weight;
+                        document.getElementById('updatePackageLength').value = pkg.length;
+                        document.getElementById('updatePackageWidth').value = pkg.width;
+                        document.getElementById('updatePackageHeight').value = pkg.height;
+                        
+                        document.getElementById('updatePackageDestinationTag').value = pkg.destination_tag;
+                        document.getElementById('updatePackageDestinationFloor').value = pkg.destination_floor;
+                        document.getElementById('updatePackagePriority').value = pkg.priority;
+                        document.getElementById('updatePackageNotes').value = pkg.notes || '';
+                        
+                        document.getElementById('lookupResult').style.display = 'block';
+                    },
+                    error: function(xhr, s) {
+                        let error = JSON.parse(xhr.responseText);
+                        console.log(error.errors);
+                        alert('Package not found!');
+                    }
+                });
+                
+            }
+            
+            function updatePackage() {
+                const packageId = document.getElementById('lookupPackageId').value;
+                $.ajax({
+                    url: '/robot/get_package/',
+                    type: 'GET',
+                    data: {
+                        'pkg_id': packageId
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log(response)
+                        pkg = response.package
+                        const formData = {
+                            'pkg_id': $('#updatePackageId').val(),
+                            'weight': $('#updatePackageWeight').val(),
+                            'length': $('#updatePackageLength').val(),
+                            'width': $('#updatePackageWidth').val(),
+                            'height': $('#updatePackageHeight').val(),
+                            'destination_tag': $('#updatePackageDestinationTag').val(),
+                            'destination_floor': $('#updatePackageDestinationFloor').val(),
+                            'priority': $('#updatePackagePriority').val(),
+                            'notes': $('#updatePackageNotes').val(),
+                            'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                        };
+                    
+                        $.ajax({
+                            type: 'POST',
+                            url: '/robot/update_package/',
+                            data: formData,
+                            dataType: 'json',
+                            success: function(response) {
+                                alert(`Package updated successfully!`);
+                                document.getElementById('updatePackageForm').reset();
+                            },
+                            error: function(xhr, s) {
+                                let error = JSON.parse(xhr.responseText);
+                                console.log(error.errors);
+                                alert('Package not found!');
+                            }
+                        });
+                    },
+                    error: function(xhr, s) {
+                        let error = JSON.parse(xhr.responseText);
+                        console.log(error.errors);
+                        alert('Package not found!');
+                    }
+                });
+
+                console.log('Updating package:', updatedPkg);
+                
+                
+                lookupPackage();
+            }
+            
+            function suggestLocation(destination, weight, dimensions) {
+                const zones = {
+                    'Node B': 'Zone 1', 'Node C': 'Zone 1', 'Node D': 'Zone 1',
+                    'Node E': 'Zone 3', 'Node F': 'Zone 3', 'Node G': 'Zone 3',
+                    'Node H': 'Zone 2', 'Node I': 'Zone 2', 'Node J': 'Zone 2'
+                };
+                
+                const zone = zones[destination] || 'Zone 1';
+                const weightNum = parseFloat(weight);
+                let shelf = weightNum > 5 ? 'C' : weightNum > 2 ? 'B' : 'A';
+                const shelfNum = Math.floor(1 + Math.random() * 8);
+                return `Shelf ${shelf}${shelfNum}, ${zone}`;
+            }
+        });
+    </script>
+</body>
+</html>

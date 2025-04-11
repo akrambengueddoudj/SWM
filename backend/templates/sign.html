@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWM - Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f5f6fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        .auth-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 800px;
+            min-height: 500px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .forms-wrapper {
+            display: flex;
+            width: 200%;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .form-container {
+            width: 50%;
+            padding: 4rem;
+            transition: opacity 0.3s ease;
+        }
+
+        .signin-container {
+            opacity: 0;
+            transform: translateX(50%);
+        }
+
+        .active .signin-container {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-header h2 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-header p {
+            color: #7f8c8d;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .switch-form {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .switch-form a {
+            color: #3498db;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .switch-form a:hover {
+            text-decoration: underline;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+            width: 800px;
+            padding: 30px 0;
+          }
+        
+          .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;   /* <-- adds space above this button */
+            padding: 0.6em 1.2em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+          }
+          .btn-back:active {
+            transform: translateY(0);
+            box-shadow: none;
+          }
+
+
+        /* error */
+        #customAlert {
+            position: fixed;
+            top: -100px;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+    
+        #customAlert.show {
+            top: 0;
+            opacity: 1;
+        }
+    
+        .alert-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    
+        .alert-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+    
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+    
+        .alert-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 0 0 15px;
+            line-height: 1;
+            width: fit-content;
+        }
+    
+        .alert-close:hover {
+            opacity: 0.75;
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                width: 90%;
+                margin: 2rem auto;
+            }
+            
+            .form-container {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+    <div id="customAlert" class="alert-hidden">
+        <div class="alert-content">
+            <span id="alertMessage"></span>
+            <button onclick="hideAlert()" class="alert-close">&times;</button>
+        </div>
+    </div>
+    <div class="auth-container" id="authContainer">
+        <div class="forms-wrapper" id="formsWrapper">
+            <!-- Sign Up Form -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Create Account</h2>
+                    <p>Join our smart warehouse system</p>
+                </div>
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" placeholder="Employee ID" id="signup_employee_id" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" placeholder="Password" id="signup_password" required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" placeholder="Re-Password" id="signup_confirm_password" required>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+                <div class="switch-form">
+                    <p>Already have an account? <a onclick="switchForm('signin')">Sign In</a></p>
+                </div>
+            </div>
+
+            <!-- Sign In Form -->
+            <div class="form-container signin-container">
+                <div class="form-header">
+                    <h2>Welcome Back</h2>
+                    <p>Access your warehouse dashboard</p>
+                </div>
+                <form id="signinForm" onsubmit="handleSignin(event)">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="text" placeholder="Emplyee ID" id='signin_employee_id' required>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" placeholder="Password" id='signin_password' required>
+                    </div>
+                    <button type="submit">Sign In</button>
+                </form>
+                <div class="switch-form">
+                    <p>Don't have an account? <a onclick="switchForm('signup')">Sign Up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+    <script>
+        function showAlert(message, type='danger', duration=10000) {
+            const alert = $('#customAlert');
+            const alertContent = $('.alert-content');
+            const alertMessage = $('#alertMessage');
+            
+            alertContent.removeClass('alert-danger alert-success alert-warning');
+            
+            alertContent.addClass(`alert-${type}`);
+            alertMessage.text(message);
+            
+            alert.addClass('show');
+            
+            if(duration > 0) {
+                setTimeout(hideAlert, duration);
+            }
+        }
+    
+        function hideAlert() {
+            $('#customAlert').removeClass('show');
+        }
+
+        function switchForm(formType) {
+            const container = document.getElementById('authContainer');
+            const wrapper = document.getElementById('formsWrapper');
+            
+            if(formType === 'signin') {
+                wrapper.style.transform = 'translateX(-50%)';
+                container.classList.add('active');
+            } else {
+                wrapper.style.transform = 'translateX(0)';
+                container.classList.remove('active');
+            }
+        }
+        switchForm('signin')
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const formData = {
+                'employee_id': $('#signup_employee_id').val(),
+                'password': $('#signup_password').val(),
+                'confirm_password': $('#signup_confirm_password').val(),
+                'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+            };
+        
+            $.ajax({
+                type: 'POST',
+                url: '/accounts/signup/',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        window.location.href = response.redirect;
+                    } else {
+                        if (response.errors) {
+                            Object.keys(response.errors).forEach(field => {
+                                showAlert('Please fix the errors below', 'danger');
+                                $(`#${field}_error`).text(response.errors[field]);
+                            });
+                        }
+                    }
+                },
+                error: function(xhr, s) {
+                    let error = JSON.parse(xhr.responseText);
+                    console.log(error.errors);
+                    showAlert(error.errors, 'danger');
+                }
+            });
+        }
+
+        function handleSignin(e) {
+            e.preventDefault();
+            const formData = {
+                'employee_id': $('#signin_employee_id').val(),
+                'password': $('#signin_password').val(),
+                'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+            };
+    
+            $.ajax({
+                type: 'POST',
+                url: '/accounts/login/',
+                data: formData,
+                dataType: 'json',
+                success: function(response) {
+                    window.location.href = response.redirect;
+                },
+                error: function(xhr, s) {
+                    let error = JSON.parse(xhr.responseText);
+                    console.log(error.errors);
+                    showAlert(error.errors, 'danger');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

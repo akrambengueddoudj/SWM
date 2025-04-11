@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporting & Analytics</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: var(--dark);
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--dark);
+            margin: 10px 0;
+        }
+        
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 400px;
+        }
+        
+        .report-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        select, button {
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-export {
+            background-color: var(--secondary);
+        }
+        
+        .btn-export:hover {
+            background-color: #27ae60;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--light);
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-delivered {
+            background-color: var(--secondary);
+        }
+        
+        .status-pending {
+            background-color: var(--warning);
+        }
+        
+        .status-cancelled {
+            background-color: var(--danger);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            min-width: 40px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: end;
+            padding: 30px;
+          }
+        
+          .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;   /* <-- adds space above this button */
+            padding: 0.6em 1.2em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+          }
+          .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+          }
+          .btn-back:active {
+            transform: translateY(0);
+            box-shadow: none;
+          }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .report-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="controls">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+    <div class="container">
+        <h1><i class="fas fa-chart-line"></i> Reporting & Analytics</h1>
+        
+        <!-- Key Metrics -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                <h2>Key Performance Indicators</h2>
+            </div>
+            
+            <div class="dashboard">
+                <div class="metric-card">
+                    <div class="metric-label">Total Packages Today</div>
+                    <div class="metric-value">142</div>
+                    <div><i class="fas fa-arrow-up" style="color: var(--secondary);"></i> 12% from yesterday</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Avg Processing Time</div>
+                    <div class="metric-value">23 min</div>
+                    <div><i class="fas fa-arrow-down" style="color: var(--danger);"></i> 5% from last week</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Robot Utilization</div>
+                    <div class="metric-value">78%</div>
+                    <div><i class="fas fa-arrow-up" style="color: var(--secondary);"></i> 8% from last month</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Delivery Accuracy</div>
+                    <div class="metric-value">98.7%</div>
+                    <div><i class="fas fa-arrow-up" style="color: var(--secondary);"></i> 1.2% from last quarter</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analytics Charts -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                <h2>Performance Analytics</h2>
+            </div>
+            
+            <div class="report-controls">
+                <select id="timePeriod">
+                    <option value="week">Last 7 Days</option>
+                    <option value="month" selected>Last 30 Days</option>
+                    <option value="quarter">Last Quarter</option>
+                    <option value="year">Last Year</option>
+                </select>
+                
+                <select id="metricType">
+                    <option value="volume">Package Volume</option>
+                    <option value="time">Processing Time</option>
+                    <option value="accuracy">Delivery Accuracy</option>
+                    <option value="utilization">Robot Utilization</option>
+                </select>
+                
+                <button id="updateCharts"><i class="fas fa-sync-alt"></i> Update</button>
+                <button class="btn-export"><i class="fas fa-file-export"></i> Export Data</button>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="destinationChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Detailed Reports -->
+        <div class="section">
+            <div class="section-title">
+                <i class="fas fa-table"></i>
+                <h2>Detailed Package Report</h2>
+            </div>
+            
+            <div class="report-controls">
+                <select id="reportType">
+                    <option value="all">All Packages</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="pending">Pending</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                
+                <input type="date" id="startDate">
+                <input type="date" id="endDate">
+                
+                <button id="generateReport"><i class="fas fa-filter"></i> Filter</button>
+                <button class="btn-export"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Package ID</th>
+                        <th>Destination</th>
+                        <th>Weight (kg)</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Processing Time</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PKG-1042</td>
+                        <td>Node E</td>
+                        <td>2.5</td>
+                        <td>High</td>
+                        <td><span class="status-badge status-delivered">Delivered</span></td>
+                        <td>18 min</td>
+                        <td>2023-06-15 10:30</td>
+                    </tr>
+                    <tr>
+                        <td>PKG-1041</td>
+                        <td>Node C</td>
+                        <td>1.2</td>
+                        <td>Medium</td>
+                        <td><span class="status-badge status-delivered">Delivered</span></td>
+                        <td>22 min</td>
+                        <td>2023-06-15 09:45</td>
+                    </tr>
+                    <tr>
+                        <td>PKG-1040</td>
+                        <td>Node H</td>
+                        <td>5.0</td>
+                        <td>Low</td>
+                        <td><span class="status-badge status-pending">Pending</span></td>
+                        <td>-</td>
+                        <td>2023-06-15 09:15</td>
+                    </tr>
+                    <tr>
+                        <td>PKG-1039</td>
+                        <td>Node B</td>
+                        <td>0.8</td>
+                        <td>Medium</td>
+                        <td><span class="status-badge status-cancelled">Cancelled</span></td>
+                        <td>-</td>
+                        <td>2023-06-14 16:20</td>
+                    </tr>
+                    <tr>
+                        <td>PKG-1038</td>
+                        <td>Node F</td>
+                        <td>3.5</td>
+                        <td>High</td>
+                        <td><span class="status-badge status-delivered">Delivered</span></td>
+                        <td>25 min</td>
+                        <td>2023-06-14 11:10</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <button disabled><i class="fas fa-chevron-left"></i></button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous">
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            const destinationCtx = document.getElementById('destinationChart').getContext('2d');
+            
+            const performanceChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Packages Processed',
+                        data: [320, 350, 410, 380],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }, {
+                        label: 'Avg Processing Time (min)',
+                        data: [28, 25, 22, 23],
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Weekly Performance Trends'
+                        }
+                    }
+                }
+            });
+            
+            const destinationChart = new Chart(destinationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Node B', 'Node C', 'Node D', 'Node E', 'Node F', 'Node G', 'Node H'],
+                    datasets: [{
+                        label: 'Packages by Destination',
+                        data: [45, 78, 32, 120, 65, 40, 85],
+                        backgroundColor: [
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(241, 196, 15, 0.7)',
+                            'rgba(230, 126, 34, 0.7)',
+                            'rgba(231, 76, 60, 0.7)',
+                            'rgba(149, 165, 166, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Package Distribution by Destination'
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('updateCharts').addEventListener('click', function() {
+                const timePeriod = document.getElementById('timePeriod').value;
+                const metricType = document.getElementById('metricType').value;
+                
+                console.log('Updating charts with:', {timePeriod, metricType});
+                
+                if (timePeriod === 'month') {
+                    performanceChart.data.labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+                    performanceChart.data.datasets[0].data = [320, 350, 410, 380];
+                } else if (timePeriod === 'week') {
+                    performanceChart.data.labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    performanceChart.data.datasets[0].data = [45, 62, 78, 55, 82, 38];
+                }
+                
+                performanceChart.update();
+            });
+            
+            document.getElementById('generateReport').addEventListener('click', function() {
+                const reportType = document.getElementById('reportType').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                console.log('Generating report with:', {reportType, startDate, endDate});
+            });
+        });
+    </script>
+</body>
+</html>
