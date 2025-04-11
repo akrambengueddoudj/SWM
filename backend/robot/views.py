@@ -86,11 +86,11 @@ def update_package(request):
             })
             
         except models.Package.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Package not found'})
+            return JsonResponse({'success': False, 'message': 'Package not found'}, status=400)
         except Exception as e:
-            return JsonResponse({'success': False, 'message': f'Error updating package: {str(e)}'})
+            return JsonResponse({'success': False, 'message': f'Error updating package: {str(e)}'}, status=400)
     
-    return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
 
 def get_package(request):
     if request.method == 'GET':

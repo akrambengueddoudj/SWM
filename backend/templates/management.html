@@ -525,7 +525,7 @@
                         console.log(response)
                         pkg = response.package
                         const formData = {
-                            'pkg_id': $('#updatePackageId').val(),
+                            'pkg_id': $('#lookupPackageId').val(),
                             'weight': $('#updatePackageWeight').val(),
                             'length': $('#updatePackageLength').val(),
                             'width': $('#updatePackageWidth').val(),
@@ -560,7 +560,6 @@
                     }
                 });
 
-                console.log('Updating package:', updatedPkg);
                 
                 
                 lookupPackage();
