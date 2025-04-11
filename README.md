@@ -151,6 +151,68 @@ A comprehensive warehouse management solution that automates package handling th
 
 ---
 
+## 🛠️ Best Practices & Deployment
+
+- **Modular Project Structure**:
+  - Separation of concerns (backend, frontend, static, config)
+  - Reusable components and apps
+
+- **Environment Configuration**:
+  - `.env` files for sensitive data (e.g., `SECRET_KEY`, `DATABASE_URL`)
+  - Use `django-environ` or `python-decouple` for parsing
+  - Separate settings files (`base.py`, `dev.py`, `prod.py`)
+
+- **Static & Media Files**:
+  - Use `collectstatic` before deployment
+  - Serve via NGINX or CDN
+  - Isolated paths for static and media for easier management
+
+- **Database & Caching**:
+  - PostgreSQL as primary database
+  - Redis for caching and WebSocket layers
+  - Regular backups of both DB and media
+
+- **WebSockets & Real-Time**:
+  - Django Channels + Redis (in production setup)
+  - Daphne or ASGI server as application layer
+
+- **Testing & Linting**:
+  - `pytest` for tests, `coverage` for code coverage
+  - Code formatting: `black`, `flake8`, `isort`
+  - CI integration recommended
+
+---
+
+## 🚀 Deployment Guidelines
+
+- **Server Stack**:
+  - Ubuntu 20.04+, Python 3.8+
+  - Gunicorn or uWSGI (WSGI layer)
+  - NGINX (reverse proxy + static/media)
+  - Redis (WebSocket + cache)
+  - PostgreSQL (production DB)
+
+- **Deployment Steps**:
+  - Clone the repo and setup virtual environment
+  - Install dependencies from `requirements.txt`
+  - Apply migrations and collect static files
+  - Configure Gunicorn as WSGI service
+  - Setup NGINX to serve static/media and proxy to Gunicorn
+  - Secure with HTTPS (Let’s Encrypt + Certbot)
+
+- **Background Services**:
+  - Celery for async tasks (optional)
+  - Supervisor/systemd for process monitoring
+  - WebSocket support with Channels + Daphne (for real-time dashboard)
+
+- **Security Config**:
+  - Enforce HTTPS
+  - JWT Authentication
+  - Regular rotation of API keys
+  - Use firewall/Fail2Ban on production servers
+
+---
+
 ## 📈 Summary
 
 This system represents a complete modernization of warehouse operations, combining robotic automation with advanced data analytics for optimal package handling efficiency.
